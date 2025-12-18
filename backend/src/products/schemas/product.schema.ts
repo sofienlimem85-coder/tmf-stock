@@ -11,6 +11,9 @@ export class Product {
   @Prop({ required: true })
   name!: string;
 
+  @Prop({ index: true })
+  normalizedName?: string;
+
   @Prop({ required: true, min: 0, default: 0 })
   quantity!: number;
 

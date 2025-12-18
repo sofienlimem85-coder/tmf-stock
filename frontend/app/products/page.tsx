@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "../../lib/api";
 import type { Product, Technician, Movement, ProductType } from "../../lib/types";
+import { getProductTypeLabel } from "../../lib/types";
 import Sidebar from "../../components/Sidebar";
 
 type CreateProductPayload = {
@@ -11,6 +12,7 @@ type CreateProductPayload = {
   quantity: number;
   invoiceNumber?: string;
   invoiceAttachment?: string;
+  comment?: string;
   type: ProductType;
 };
 
@@ -31,6 +33,8 @@ export default function ProductsPage() {
 
   const [selectedProductType, setSelectedProductType] = useState<ProductType>("TYPE1");
   const [search, setSearch] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState<string>("");
+  const [filterDateTo, setFilterDateTo] = useState<string>("");
   const [sortBy, setSortBy] = useState<"name" | "quantity" | "createdAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
@@ -42,6 +46,7 @@ export default function ProductsPage() {
     quantity: 0,
     invoiceNumber: "",
     invoiceAttachment: "",
+    comment: "",
     type: "TYPE1"
   });
 
@@ -51,6 +56,7 @@ export default function ProductsPage() {
     quantity: 0,
     invoiceNumber: "",
     invoiceAttachment: "",
+    comment: "",
     type: "TYPE1"
   });
 
@@ -171,6 +177,7 @@ export default function ProductsPage() {
         quantity: form.quantity,
         invoiceNumber: form.invoiceNumber?.trim() || undefined,
         invoiceAttachment: form.invoiceAttachment || undefined,
+        comment: form.comment?.trim() || undefined,
         type: form.type,
       };
       await apiRequest<Product>("/products", {
@@ -186,6 +193,7 @@ export default function ProductsPage() {
         quantity: 0,
         invoiceNumber: "",
         invoiceAttachment: "",
+        comment: "",
         type: "TYPE1"
       });
       setShowCreateModal(false);
@@ -205,6 +213,7 @@ export default function ProductsPage() {
       quantity: product.quantity,
       invoiceNumber: product.invoiceNumber || "",
       invoiceAttachment: product.invoiceAttachment || "",
+      comment: "",
       type: product.type
     });
     setShowCreateModal(true);
@@ -311,7 +320,17 @@ export default function ProductsPage() {
     };
   };
 
-  const items = response?.data || [];
+  // Filtrer par plage de dates si des dates sont sélectionnées
+  const filteredItems = (response?.data || []).filter((product) => {
+    if (!filterDateFrom && !filterDateTo) return true;
+    if (!product.createdAt) return false;
+    const productDate = new Date(product.createdAt).toISOString().split('T')[0];
+    const dateFrom = filterDateFrom || '1900-01-01';
+    const dateTo = filterDateTo || '9999-12-31';
+    return productDate >= dateFrom && productDate <= dateTo;
+  });
+
+  const items = filteredItems;
 
   return (
     <div style={layoutStyle}>
@@ -342,7 +361,7 @@ export default function ProductsPage() {
 
           {/* Product Type Selector */}
           <div style={typeSelectorContainerStyle}>
-            <label style={typeSelectorLabelStyle}>Type de Produit :</label>
+            <label style={typeSelectorLabelStyle}>Catégorie :</label>
             <div style={typeSelectorButtonsStyle}>
               <button
                 type="button"
@@ -353,7 +372,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
               >
-                Type 1
+                {getProductTypeLabel("TYPE1")}
               </button>
               <button
                 type="button"
@@ -364,7 +383,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
               >
-                Type 2
+                {getProductTypeLabel("TYPE2")}
               </button>
             </div>
           </div>
@@ -384,30 +403,54 @@ export default function ProductsPage() {
               />
             </div>
             <div style={sortContainerStyle}>
-              <span style={sortLabelStyle}>Trier par :</span>
-              <button
-                type="button"
-                className="sort-button"
-                style={getSortButtonStyle("createdAt")}
-                onClick={() => {
-                  if (sortBy === "createdAt") {
-                    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                  } else {
-                    setSortBy("createdAt");
-                    setSortOrder("desc");
-                  }
-                  setPage(1);
-                }}
-                title="Trier par date"
-              >
-                <CalendarIcon />
-                <span>Date</span>
-                {sortBy === "createdAt" && (
-                  <span style={sortIndicatorStyle}>
-                    {sortOrder === "asc" ? "↑" : "↓"}
-                  </span>
+              <div style={dateRangeContainerStyle}>
+                <span style={sortLabelStyle}>Période :</span>
+                <div style={dateRangeInputsStyle}>
+                  <div style={dateInputWrapperStyle}>
+                    <label style={dateInputLabelStyle}>Du</label>
+                    <input
+                      type="date"
+                      style={dateInputStyle}
+                      value={filterDateFrom}
+                      onChange={(e) => {
+                        setFilterDateFrom(e.target.value);
+                        setPage(1);
+                      }}
+                      max={filterDateTo || undefined}
+                      title="Date de début"
+                    />
+                  </div>
+                  <div style={dateInputWrapperStyle}>
+                    <label style={dateInputLabelStyle}>Au</label>
+                    <input
+                      type="date"
+                      style={dateInputStyle}
+                      value={filterDateTo}
+                      onChange={(e) => {
+                        setFilterDateTo(e.target.value);
+                        setPage(1);
+                      }}
+                      min={filterDateFrom || undefined}
+                      title="Date de fin"
+                    />
+                  </div>
+                </div>
+                {(filterDateFrom || filterDateTo) && (
+                  <button
+                    type="button"
+                    style={clearDateButtonStyle}
+                    onClick={() => {
+                      setFilterDateFrom("");
+                      setFilterDateTo("");
+                      setPage(1);
+                    }}
+                    title="Effacer le filtre de date"
+                  >
+                    ×
+                  </button>
                 )}
-              </button>
+              </div>
+              <span style={sortLabelStyle}>Trier par :</span>
               <button
                 type="button"
                 className="sort-button"
@@ -453,9 +496,6 @@ export default function ProductsPage() {
                   <tr style={theadRowStyle}>
                     <th style={thStyle}>Nom du Produit</th>
                     <th style={thStyle}>Quantité</th>
-                    <th style={thStyle}>Date d'Ajout</th>
-                    <th style={thStyle}>Numéro de Facture</th>
-                    <th style={thStyle}>Facture</th>
                     <th style={thStyle}>Statut</th>
                     <th style={thStyle}>Actions</th>
                   </tr>
@@ -467,45 +507,6 @@ export default function ProductsPage() {
                       <tr key={product._id} style={tbodyRowStyle}>
                         <td style={tdStyle}>{product.name}</td>
                         <td style={tdStyle}>{product.quantity}</td>
-                        <td style={tdStyle}>
-                          {product.createdAt
-                            ? new Date(product.createdAt).toLocaleDateString("fr-FR")
-                            : "—"}
-                        </td>
-                        <td style={tdStyle}>{product.invoiceNumber ?? "—"}</td>
-                        <td style={tdStyle}>
-                          {product.invoiceAttachment && (product.invoiceAttachment.includes('image') || product.invoiceAttachment.includes('cloudinary')) ? (
-                            <div 
-                              className="image-thumbnail"
-                              style={imageThumbnailStyle}
-                              onClick={() => setViewingImage(product.invoiceAttachment ?? null)}
-                              title="Cliquer pour agrandir"
-                            >
-                              <img 
-                                src={product.invoiceAttachment} 
-                                alt="Facture" 
-                                style={imageThumbnailImgStyle}
-                              />
-                              <div className="image-overlay" style={imageOverlayStyle}>
-                                <EyeIcon />
-                              </div>
-                            </div>
-                          ) : product.invoiceAttachment ? (
-                            <a
-                              href={product.invoiceAttachment}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={linkStyle}
-                              title="Voir le PDF"
-                            >
-                              PDF
-                            </a>
-                          ) : (
-                            <div style={noImageStyle}>
-                              <ImageIcon />
-                            </div>
-                          )}
-                        </td>
                         <td style={tdStyle}>
                           <span style={statusBadge.style}>{statusBadge.label}</span>
                         </td>
@@ -606,7 +607,7 @@ export default function ProductsPage() {
                 </div>
               )}
               <label style={labelStyle}>
-                <span>Type de Produit *</span>
+                <span>Catégorie *</span>
                 <select
                   style={inputStyle}
                   value={editingId ? editForm.type : form.type}
@@ -617,8 +618,8 @@ export default function ProductsPage() {
                   }
                   required
                 >
-                  <option value="TYPE1">Type 1</option>
-                  <option value="TYPE2">Type 2</option>
+                  <option value="TYPE1">{getProductTypeLabel("TYPE1")}</option>
+                  <option value="TYPE2">{getProductTypeLabel("TYPE2")}</option>
                 </select>
               </label>
               <label style={labelStyle}>
@@ -720,6 +721,19 @@ export default function ProductsPage() {
                   </button>
                 )}
               </div>
+              <label style={labelStyle}>
+                <span>Commentaire (optionnel)</span>
+                <textarea
+                  style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }}
+                  placeholder="Commentaire sur cet ajout de stock..."
+                  value={editingId ? editForm.comment : form.comment}
+                  onChange={(e) =>
+                    editingId
+                      ? setEditForm({ ...editForm, comment: e.target.value })
+                      : setForm({ ...form, comment: e.target.value })
+                  }
+                />
+              </label>
             </div>
             <div style={modalFooter}>
               <button
@@ -1116,6 +1130,63 @@ const sortLabelStyle: React.CSSProperties = {
   fontSize: "0.95rem",
   fontWeight: 500,
   color: "#344D59",
+};
+
+const dateRangeContainerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  flexWrap: "wrap",
+};
+
+const dateRangeInputsStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+};
+
+const dateInputWrapperStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.25rem",
+};
+
+const dateInputLabelStyle: React.CSSProperties = {
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  color: "#6b7280",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+};
+
+const dateInputStyle: React.CSSProperties = {
+  padding: "0.625rem 1rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #e5e7eb",
+  backgroundColor: "#ffffff",
+  color: "#344D59",
+  fontSize: "0.95rem",
+  cursor: "pointer",
+  transition: "all 0.2s",
+  minWidth: "140px",
+};
+
+const clearDateButtonStyle: React.CSSProperties = {
+  padding: "0.5rem",
+  borderRadius: "0.5rem",
+  border: "none",
+  backgroundColor: "transparent",
+  color: "#ef4444",
+  fontSize: "1.25rem",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "all 0.2s",
+  width: "32px",
+  height: "32px",
+  alignSelf: "flex-end",
+  marginBottom: "0.25rem",
 };
 
 const sortButtonStyle: React.CSSProperties = {

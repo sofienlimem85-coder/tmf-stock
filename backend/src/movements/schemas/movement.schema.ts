@@ -21,6 +21,12 @@ export class Movement {
 
   @Prop()
   comment?: string;
+
+  @Prop()
+  invoiceNumber?: string;
+
+  @Prop()
+  invoiceAttachment?: string;
 }
 
 export const MovementSchema = SchemaFactory.createForClass(Movement);

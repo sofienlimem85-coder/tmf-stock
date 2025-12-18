@@ -4,6 +4,7 @@ import {
   IsMongoId,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
 } from 'class-validator';
 import type { MovementType } from '../schemas/movement.schema';
@@ -27,6 +28,15 @@ export class CreateMovementDto {
   @IsOptional()
   @IsString()
   comment?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  invoiceNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  invoiceAttachment?: string;
 }
 
 

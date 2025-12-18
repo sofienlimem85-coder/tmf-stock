@@ -28,6 +28,11 @@ export class CreateProductDto {
   @IsString()
   invoiceAttachment?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string;
+
   @IsEnum(['TYPE1', 'TYPE2'])
   type!: ProductType;
 }
