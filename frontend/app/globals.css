@@ -1,0 +1,166 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  font-weight: 500;
+  color: #344D59;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  background-color: #f9fafb;
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.25rem;
+  color: #344D59;
+}
+
+.file-upload-button:hover {
+  border-color: #137C8B !important;
+  color: #137C8B !important;
+  background-color: #f0f9fa !important;
+}
+
+.file-upload-button:active {
+  transform: scale(0.98);
+}
+
+/* Hover effects */
+button:hover {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+tr:hover {
+  background-color: #f9fafb;
+}
+
+.nav-item:hover {
+  background-color: #f3f4f6;
+}
+
+.logout-button:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.add-product-button:hover {
+  background-color: #0f6b7a !important;
+}
+
+.icon-button:hover {
+  background-color: #f3f4f6;
+}
+
+.assign-icon-button:hover {
+  background-color: #fef3c7;
+}
+
+.delete-icon-button:hover {
+  background-color: #fee2e2;
+}
+
+.technician-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.edit-technician-button:hover {
+  background-color: #d1fae5;
+}
+
+.movement-row:hover {
+  background-color: #f9fafb;
+}
+
+.filter-button:hover {
+  background-color: #f3f4f6;
+  border-color: #137C8B;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.input-container:hover {
+  border-color: #137C8B;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #0f6b7a !important;
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.type-button:hover:not(.active) {
+  border-color: #137C8B;
+  color: #137C8B;
+}
+
+.sort-button:hover {
+  border-color: #137C8B !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(19, 124, 139, 0.1);
+}
+
+/* Logo floating animation for login page */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.logo-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 30px -5px rgba(19, 124, 139, 0.3), 0 10px 15px -6px rgba(19, 124, 139, 0.15) !important;
+}
+
+.image-thumbnail:hover .image-overlay {
+  opacity: 1;
+}
+
+.image-thumbnail:hover {
+  border-color: #137C8B;
+  transform: scale(1.05);
+}
+
+.image-modal-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.movement-row:hover {
+  background-color: #f9fafb;
+}
+
+
