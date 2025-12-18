@@ -33,7 +33,8 @@ export class CloudinaryService {
 
       return result.secure_url;
     } catch (error) {
-      throw new Error(`Failed to upload image to Cloudinary: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to upload image to Cloudinary: ${errorMessage}`);
     }
   }
 
@@ -41,7 +42,8 @@ export class CloudinaryService {
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-      throw new Error(`Failed to delete image from Cloudinary: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to delete image from Cloudinary: ${errorMessage}`);
     }
   }
 }

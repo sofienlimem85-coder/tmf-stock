@@ -1,0 +1,40 @@
+services:
+  # Backend Service
+  - type: web
+    name: tmf-stock-backend
+    env: node
+    region: frankfurt  # Changez selon votre préférence (frankfurt, oregon, singapore, etc.)
+    plan: free  # ou starter, standard, etc.
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false  # Vous devrez définir cette valeur manuellement
+      - key: JWT_SECRET
+        sync: false  # Vous devrez définir cette valeur manuellement
+      - key: FRONTEND_ORIGIN
+        sync: false  # Vous devrez mettre à jour après le déploiement du frontend
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
+        value: noreply@votredomaine.com  # Remplacez par votre email
+
+  # Frontend Service
+  - type: web
+    name: tmf-stock-frontend
+    env: node
+    region: frankfurt  # Même région que le backend
+    plan: free  # ou starter, standard, etc.
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false  # Vous devrez mettre à jour avec l'URL du backend après déploiement
+

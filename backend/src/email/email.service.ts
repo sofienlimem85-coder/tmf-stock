@@ -3,7 +3,7 @@ import * as brevo from '@getbrevo/brevo';
 
 @Injectable()
 export class EmailService {
-  private apiInstance: brevo.TransactionalEmailsApi;
+  private apiInstance: brevo.TransactionalEmailsApi | null = null;
 
   constructor() {
     const apiKey = process.env.BREVO_API_KEY;
@@ -20,6 +20,8 @@ export class EmailService {
     if (!this.apiInstance) {
       throw new Error('Email service not configured. Please set BREVO_API_KEY in .env');
     }
+
+    const apiInstance = this.apiInstance;
 
     const sendSmtpEmail = new brevo.SendSmtpEmail();
     
@@ -119,7 +121,7 @@ export class EmailService {
     sendSmtpEmail.to = [{ email }];
 
     try {
-      await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      await apiInstance.sendTransacEmail(sendSmtpEmail);
     } catch (error) {
       console.error('Error sending email:', error);
       throw new Error('Failed to send verification email');
