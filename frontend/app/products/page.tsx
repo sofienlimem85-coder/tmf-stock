@@ -478,7 +478,7 @@ export default function ProductsPage() {
                             <div 
                               className="image-thumbnail"
                               style={imageThumbnailStyle}
-                              onClick={() => setViewingImage(product.invoiceAttachment)}
+                              onClick={() => setViewingImage(product.invoiceAttachment ?? null)}
                               title="Cliquer pour agrandir"
                             >
                               <img 
