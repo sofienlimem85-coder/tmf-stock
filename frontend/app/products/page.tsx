@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "../../lib/api";
 import type { Product, Technician, Movement, ProductType } from "../../lib/types";
 import { getProductTypeLabel } from "../../lib/types";
+import { exportToExcel } from "../../lib/excel";
 import Sidebar from "../../components/Sidebar";
 
 type CreateProductPayload = {
@@ -355,6 +356,25 @@ export default function ProductsPage() {
       .reduce((sum, m) => sum + m.quantity, 0);
   };
 
+  // Fonction pour exporter en Excel
+  const handleExportExcel = () => {
+    const exportData = items.map((product) => {
+      const loanedQty = getLoanedQuantity(product._id);
+      const availableQty = product.quantity - loanedQty;
+      return {
+        "Nom du Produit": product.name,
+        "Quantité Totale": product.quantity,
+        "Quantité Disponible": availableQty,
+        "Quantité Prêtée": loanedQty,
+        "Catégorie": getProductTypeLabel(product.type),
+        "Statut": product.status === "disponible" ? "Disponible" : "Stock Vide",
+        "Numéro de Facture": product.invoiceNumber || "",
+        "Date de Création": product.createdAt ? new Date(product.createdAt).toLocaleDateString('fr-FR') : "",
+      };
+    });
+    exportToExcel(exportData, `produits_${new Date().toISOString().split('T')[0]}`);
+  };
+
   return (
     <div style={layoutStyle}>
       <Sidebar />
@@ -425,6 +445,15 @@ export default function ProductsPage() {
                 }}
               />
             </div>
+            <button
+              type="button"
+              style={exportButtonStyle}
+              onClick={handleExportExcel}
+              title="Exporter en Excel"
+            >
+              <ExportIcon />
+              <span>Exporter Excel</span>
+            </button>
             <div style={sortContainerStyle}>
               <div style={dateRangeContainerStyle}>
                 <span style={sortLabelStyle}>Période :</span>
@@ -1029,6 +1058,16 @@ function CloseIcon() {
   );
 }
 
+function ExportIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 // Styles
 const layoutStyle: React.CSSProperties = {
   display: "flex",
@@ -1165,6 +1204,21 @@ const sortLabelStyle: React.CSSProperties = {
   fontSize: "0.95rem",
   fontWeight: 500,
   color: "#344D59",
+};
+
+const exportButtonStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.625rem 1rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #10b981",
+  backgroundColor: "#10b981",
+  color: "#ffffff",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const dateRangeContainerStyle: React.CSSProperties = {

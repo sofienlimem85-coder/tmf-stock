@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "../../lib/api";
 import type { Technician } from "../../lib/types";
+import { exportToExcel } from "../../lib/excel";
 import Sidebar from "../../components/Sidebar";
 
 type CreateTechnicianPayload = {
@@ -155,6 +156,26 @@ export default function TechniciansPage() {
       : true
   );
 
+  // Pagination pour techniciens
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
+
+  // Fonction pour exporter en Excel
+  const handleExportExcel = () => {
+    const exportData = filteredItems.map((tech) => ({
+      "Nom": tech.name,
+      "Email": tech.email,
+      "Équipe": tech.team,
+      "Téléphone": tech.phone || "",
+      "Date de Création": tech.createdAt ? new Date(tech.createdAt).toLocaleDateString('fr-FR') : "",
+    }));
+    exportToExcel(exportData, `techniciens_${new Date().toISOString().split('T')[0]}`);
+  };
+
   return (
     <div style={layoutStyle}>
       <Sidebar />
@@ -183,14 +204,28 @@ export default function TechniciansPage() {
           </header>
 
           {/* Search Bar */}
-          <div style={searchContainerStyle}>
-            <SearchIcon />
-            <input
-              style={searchInputStyle}
-              placeholder="Rechercher des techniciens..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div style={toolbarContainerStyle}>
+            <div style={searchContainerStyle}>
+              <SearchIcon />
+              <input
+                style={searchInputStyle}
+                placeholder="Rechercher des techniciens..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              style={exportButtonStyle}
+              onClick={handleExportExcel}
+              title="Exporter en Excel"
+            >
+              <ExportIcon />
+              <span>Exporter Excel</span>
+            </button>
           </div>
 
           {/* Messages - Only success messages, errors are shown in modals */}
@@ -208,8 +243,9 @@ export default function TechniciansPage() {
               {search ? "Aucun technicien ne correspond à votre recherche." : "Aucun technicien pour le moment."}
             </div>
           ) : (
-            <div style={cardsGridStyle}>
-              {filteredItems.map((technician) => (
+            <>
+              <div style={cardsGridStyle}>
+                {paginatedItems.map((technician) => (
                 <div key={technician._id} style={cardStyle} className="technician-card">
                   {/* Card Header */}
                   <div style={cardHeaderStyle}>
@@ -260,8 +296,31 @@ export default function TechniciansPage() {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div style={paginationStyle}>
+                  <button
+                    style={paginationButtonStyle}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Précédent
+                  </button>
+                  <span style={paginationInfoStyle}>
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    style={paginationButtonStyle}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -433,6 +492,16 @@ function PhoneIcon() {
   );
 }
 
+function ExportIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 // Styles
 const layoutStyle: React.CSSProperties = {
   display: "flex",
@@ -487,6 +556,14 @@ const addButtonStyle: React.CSSProperties = {
   transition: "all 0.2s",
 };
 
+const toolbarContainerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "1rem",
+  marginBottom: "1.5rem",
+  flexWrap: "wrap",
+};
+
 const searchContainerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -495,9 +572,23 @@ const searchContainerStyle: React.CSSProperties = {
   backgroundColor: "#ffffff",
   borderRadius: "0.75rem",
   border: "1px solid #e5e7eb",
-  marginBottom: "1.5rem",
   width: "100%",
   maxWidth: "500px",
+};
+
+const exportButtonStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.625rem 1rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #10b981",
+  backgroundColor: "#10b981",
+  color: "#ffffff",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const searchInputStyle: React.CSSProperties = {
@@ -774,4 +865,31 @@ const modalErrorStyle: React.CSSProperties = {
   fontSize: "0.875rem",
   marginBottom: "1rem",
   border: "1px solid #fecaca",
+};
+
+const paginationStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "1rem",
+  marginTop: "2rem",
+  padding: "1rem",
+};
+
+const paginationButtonStyle: React.CSSProperties = {
+  padding: "0.5rem 1rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #e5e7eb",
+  backgroundColor: "#ffffff",
+  color: "#344D59",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.2s",
+};
+
+const paginationInfoStyle: React.CSSProperties = {
+  fontSize: "0.875rem",
+  color: "#6b7280",
+  fontWeight: 500,
 };

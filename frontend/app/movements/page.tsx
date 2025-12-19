@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "../../lib/api";
 import type { Movement, Product, Technician, ProductType, ProductsResponse } from "../../lib/types";
 import { getProductTypeLabel } from "../../lib/types";
+import { exportToExcel } from "../../lib/excel";
 import Sidebar from "../../components/Sidebar";
 
 export default function MovementsPage() {
@@ -152,6 +153,27 @@ export default function MovementsPage() {
 
   const productById = new Map(products.map((p) => [p._id, p]));
   const techById = new Map(technicians.map((t) => [t._id, t]));
+
+  // Fonction pour exporter en Excel
+  const handleExportExcel = () => {
+    const exportData = filteredMovements.map((movement) => {
+      const product = productById.get(movement.productId);
+      const technician = movement.technicianId ? techById.get(movement.technicianId) : undefined;
+      return {
+        "Type": movement.type === "ENTREE" ? "Entrée Stock" : "Sortie Stock",
+        "Nom du Produit": product?.name || "Inconnu",
+        "Quantité": movement.quantity,
+        "Technicien": technician?.name || "—",
+        "Statut": movement.type === "SORTIE" 
+          ? (movement.loanStatus === "PRETE" ? "Prêté" : movement.loanStatus === "RENDU" ? "Rendu" : "—")
+          : "—",
+        "Commentaire": movement.comment || "",
+        "Date": movement.createdAt ? new Date(movement.createdAt).toLocaleDateString('fr-FR') : "",
+        "Heure": movement.createdAt ? new Date(movement.createdAt).toLocaleTimeString('fr-FR') : "",
+      };
+    });
+    exportToExcel(exportData, `mouvements_${filterType.toLowerCase()}_${new Date().toISOString().split('T')[0]}`);
+  };
 
   const filteredMovements = movements
     .filter((movement) => {
@@ -313,6 +335,15 @@ export default function MovementsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            <button
+              type="button"
+              style={exportButtonStyle}
+              onClick={handleExportExcel}
+              title="Exporter en Excel"
+            >
+              <ExportIcon />
+              <span>Exporter Excel</span>
+            </button>
             <div style={sortContainerStyle}>
               <div style={dateRangeContainerStyle}>
                 <span style={sortLabelStyle}>Période :</span>
@@ -751,6 +782,16 @@ function ImageIcon() {
   );
 }
 
+function ExportIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 // Styles
 const layoutStyle: React.CSSProperties = {
   display: "flex",
@@ -856,6 +897,21 @@ const searchInputStyle: React.CSSProperties = {
   fontSize: "0.95rem",
   color: "#344D59",
   backgroundColor: "transparent",
+};
+
+const exportButtonStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.625rem 1rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #10b981",
+  backgroundColor: "#10b981",
+  color: "#ffffff",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const sortContainerStyle: React.CSSProperties = {
