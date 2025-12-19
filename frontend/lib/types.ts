@@ -39,6 +39,8 @@ export type Technician = {
 
 export type MovementType = "ENTREE" | "SORTIE";
 
+export type LoanStatus = 'PRETE' | 'RENDU';
+
 export type Movement = {
   _id: string;
   productId: string;
@@ -48,6 +50,7 @@ export type Movement = {
   comment?: string;
   invoiceNumber?: string;
   invoiceAttachment?: string;
+  loanStatus?: LoanStatus;
   createdAt?: string;
   updatedAt?: string;
 };

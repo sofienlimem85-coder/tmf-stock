@@ -42,6 +42,15 @@ export class MovementsController {
     return this.movementsService.update(id, dto);
   }
 
+  @Put(':id/loan-status')
+  @Roles(UserRole.ADMIN)
+  updateLoanStatus(
+    @Param('id') id: string,
+    @Body() body: { loanStatus: 'PRETE' | 'RENDU' },
+  ) {
+    return this.movementsService.update(id, { loanStatus: body.loanStatus });
+  }
+
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {

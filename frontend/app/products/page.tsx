@@ -61,6 +61,7 @@ export default function ProductsPage() {
   });
 
   const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
   const [assigningProductId, setAssigningProductId] = useState<string | null>(null);
   const [assignForm, setAssignForm] = useState({
     technicianId: "",
@@ -80,6 +81,7 @@ export default function ProductsPage() {
     }
     load();
     loadTechnicians();
+    loadMovements();
   }, [router, search, sortBy, sortOrder, page, selectedProductType]);
 
   // Fermer le modal d'image avec la touche ESC
@@ -99,6 +101,15 @@ export default function ProductsPage() {
       setTechnicians(data);
     } catch (err: any) {
       console.error("Erreur lors du chargement des techniciens:", err);
+    }
+  };
+
+  const loadMovements = async () => {
+    try {
+      const data = await apiRequest<Movement[]>("/movements");
+      setMovements(data);
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des mouvements:", err);
     }
   };
 
@@ -283,6 +294,7 @@ export default function ProductsPage() {
       setSuccessMessage("Produit affecté avec succès !");
       setAssigningProductId(null);
       await load();
+      await loadMovements(); // Recharger les mouvements pour mettre à jour la quantité disponible
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       setError(err.message ?? "Erreur lors de l'affectation");
@@ -331,6 +343,17 @@ export default function ProductsPage() {
   });
 
   const items = filteredItems;
+
+  // Calculer la quantité prêtée pour chaque produit
+  const getLoanedQuantity = (productId: string): number => {
+    return movements
+      .filter(m => 
+        m.productId === productId && 
+        m.type === "SORTIE" && 
+        (!m.loanStatus || m.loanStatus === "PRETE")
+      )
+      .reduce((sum, m) => sum + m.quantity, 0);
+  };
 
   return (
     <div style={layoutStyle}>
@@ -495,7 +518,8 @@ export default function ProductsPage() {
                 <thead>
                   <tr style={theadRowStyle}>
                     <th style={thStyle}>Nom du Produit</th>
-                    <th style={thStyle}>Quantité</th>
+                    <th style={thStyle}>Quantité Totale</th>
+                    <th style={thStyle}>Quantité Disponible</th>
                     <th style={thStyle}>Statut</th>
                     <th style={thStyle}>Actions</th>
                   </tr>
@@ -506,7 +530,18 @@ export default function ProductsPage() {
                     return (
                       <tr key={product._id} style={tbodyRowStyle}>
                         <td style={tdStyle}>{product.name}</td>
-                        <td style={tdStyle}>{product.quantity}</td>
+                        <td style={{ ...tdStyle, textAlign: "right" as const }}>{product.quantity}</td>
+                        <td style={{ ...tdStyle, textAlign: "right" as const }}>
+                          {(() => {
+                            const loanedQty = getLoanedQuantity(product._id);
+                            const availableQty = product.quantity - loanedQty;
+                            return (
+                              <span style={availableQty <= 0 ? { color: "#ef4444", fontWeight: 500 } : {}}>
+                                {availableQty}
+                              </span>
+                            );
+                          })()}
+                        </td>
                         <td style={tdStyle}>
                           <span style={statusBadge.style}>{statusBadge.label}</span>
                         </td>

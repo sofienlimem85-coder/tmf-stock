@@ -4,6 +4,7 @@ import { HydratedDocument } from 'mongoose';
 export type MovementDocument = HydratedDocument<Movement>;
 
 export type MovementType = 'ENTREE' | 'SORTIE';
+export type LoanStatus = 'PRETE' | 'RENDU';
 
 @Schema({ timestamps: true })
 export class Movement {
@@ -27,6 +28,9 @@ export class Movement {
 
   @Prop()
   invoiceAttachment?: string;
+
+  @Prop({ enum: ['PRETE', 'RENDU'], default: null })
+  loanStatus?: LoanStatus;
 }
 
 export const MovementSchema = SchemaFactory.createForClass(Movement);

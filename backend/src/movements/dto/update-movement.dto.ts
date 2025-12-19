@@ -30,6 +30,11 @@ export class UpdateMovementDto {
   @IsOptional()
   @IsString()
   comment?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['PRETE', 'RENDU'])
+  loanStatus?: 'PRETE' | 'RENDU';
 }
 
 

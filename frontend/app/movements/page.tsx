@@ -19,6 +19,7 @@ export default function MovementsPage() {
   const [filterDateFrom, setFilterDateFrom] = useState<string>("");
   const [filterDateTo, setFilterDateTo] = useState<string>("");
   const [filterType, setFilterType] = useState<"ENTREE" | "SORTIE">("ENTREE");
+  const [filterLoanStatus, setFilterLoanStatus] = useState<"PRETE" | "RENDU" | "ALL">("ALL");
   const [selectedProductType, setSelectedProductType] = useState<ProductType>("TYPE1");
   const [sortBy, setSortBy] = useState<"quantity" | "createdAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -97,6 +98,30 @@ export default function MovementsPage() {
     }
   };
 
+  const handleReturnTool = async (id: string) => {
+    try {
+      await apiRequest(`/movements/${id}/loan-status`, {
+        method: "PUT",
+        body: JSON.stringify({ loanStatus: "RENDU" }),
+      });
+      await loadMovements();
+    } catch (err: any) {
+      setError(err.message ?? "Erreur lors de la mise à jour du statut");
+    }
+  };
+
+  const handleLoanTool = async (id: string) => {
+    try {
+      await apiRequest(`/movements/${id}/loan-status`, {
+        method: "PUT",
+        body: JSON.stringify({ loanStatus: "PRETE" }),
+      });
+      await loadMovements();
+    } catch (err: any) {
+      setError(err.message ?? "Erreur lors de la mise à jour du statut");
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce mouvement ?")) return;
     setError(null);
@@ -157,7 +182,16 @@ export default function MovementsPage() {
           })()
         : true;
 
-      return matchesSearch && matchesFilter && matchesProductType && matchesDate;
+      // Filtrer par statut de prêt (seulement pour les sorties)
+      const matchesLoanStatus = filterType === 'SORTIE'
+        ? filterLoanStatus === 'ALL' 
+          ? true 
+          : filterLoanStatus === 'PRETE' 
+            ? (!movement.loanStatus || movement.loanStatus === 'PRETE')
+            : movement.loanStatus === filterLoanStatus
+        : true;
+
+      return matchesSearch && matchesFilter && matchesProductType && matchesDate && matchesLoanStatus;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -234,6 +268,39 @@ export default function MovementsPage() {
               </button>
             </div>
           </div>
+
+          {/* Loan Status Filter - Only for SORTIE */}
+          {filterType === "SORTIE" && (
+            <div style={typeSelectorContainerStyle}>
+              <label style={typeSelectorLabelStyle}>Statut :</label>
+              <div style={typeSelectorButtonsStyle}>
+                <button
+                  type="button"
+                  className={filterLoanStatus === "ALL" ? "active" : ""}
+                  style={filterLoanStatus === "ALL" ? activeTypeButtonStyle : typeButtonStyle}
+                  onClick={() => setFilterLoanStatus("ALL")}
+                >
+                  Tous
+                </button>
+                <button
+                  type="button"
+                  className={filterLoanStatus === "PRETE" ? "active" : ""}
+                  style={filterLoanStatus === "PRETE" ? activeTypeButtonStyle : typeButtonStyle}
+                  onClick={() => setFilterLoanStatus("PRETE")}
+                >
+                  Prêté
+                </button>
+                <button
+                  type="button"
+                  className={filterLoanStatus === "RENDU" ? "active" : ""}
+                  style={filterLoanStatus === "RENDU" ? activeTypeButtonStyle : typeButtonStyle}
+                  onClick={() => setFilterLoanStatus("RENDU")}
+                >
+                  Rendu
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Search, Filter and Sort Bar */}
           <div style={toolbarStyle}>
@@ -466,6 +533,7 @@ export default function MovementsPage() {
                       <th style={thStyle}>Article</th>
                       <th style={thStyle}>Quantité</th>
                       <th style={thStyle}>Technicien</th>
+                      <th style={thStyle}>Statut</th>
                       <th style={thStyle}>Commentaire</th>
                       <th style={thStyle}>Date</th>
                       <th style={thStyle}>Heure</th>
@@ -498,6 +566,30 @@ export default function MovementsPage() {
                               <span style={technicianLinkStyle}>{technician.name}</span>
                             ) : (
                               "—"
+                            )}
+                          </td>
+                          <td style={tdStyle}>
+                            {movement.type === "SORTIE" ? (
+                              <select
+                                style={statusSelectStyle}
+                                value={movement.loanStatus || "PRETE"}
+                                onChange={(e) => {
+                                  const newStatus = e.target.value as "PRETE" | "RENDU";
+                                  if (newStatus !== (movement.loanStatus || "PRETE")) {
+                                    if (newStatus === "RENDU") {
+                                      handleReturnTool(movement._id);
+                                    } else {
+                                      handleLoanTool(movement._id);
+                                    }
+                                  }
+                                }}
+                                title="Changer le statut"
+                              >
+                                <option value="PRETE">Prêté</option>
+                                <option value="RENDU">Rendu</option>
+                              </select>
+                            ) : (
+                              <span style={loanStatusDefaultStyle}>—</span>
                             )}
                           </td>
                           <td style={tdStyle}>
@@ -983,6 +1075,30 @@ const commentTextStyle: React.CSSProperties = {
 const noCommentStyle: React.CSSProperties = {
   color: "#9ca3af",
   fontSize: "0.875rem",
+};
+
+const loanStatusDefaultStyle: React.CSSProperties = {
+  color: "#9ca3af",
+  fontSize: "0.875rem",
+};
+
+const statusSelectStyle: React.CSSProperties = {
+  padding: "0.5rem 0.75rem",
+  borderRadius: "0.5rem",
+  border: "1px solid #e5e7eb",
+  backgroundColor: "#ffffff",
+  color: "#344D59",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "all 0.2s",
+  minWidth: "120px",
+  outline: "none",
+};
+
+const statusSelectStyleFocus: React.CSSProperties = {
+  borderColor: "#137C8B",
+  boxShadow: "0 0 0 3px rgba(19, 124, 139, 0.1)",
 };
 
 const availableBadgeStyle: React.CSSProperties = {

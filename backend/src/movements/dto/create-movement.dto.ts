@@ -37,6 +37,11 @@ export class CreateMovementDto {
   @IsOptional()
   @IsString()
   invoiceAttachment?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['PRETE', 'RENDU'])
+  loanStatus?: 'PRETE' | 'RENDU';
 }
 
 
