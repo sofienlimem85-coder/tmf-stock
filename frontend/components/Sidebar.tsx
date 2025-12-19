@@ -44,6 +44,9 @@ export default function Sidebar() {
         })}
       </nav>
       <div style={logoutContainer}>
+        <div style={copyrightStyle}>
+          <span style={copyrightTextStyle}>© Sofien.Limem</span>
+        </div>
         <button type="button" onClick={handleLogout} style={logoutButton} className="logout-button">
           <LogoutIcon />
           <span>Déconnexion</span>
@@ -165,6 +168,17 @@ const activeNavItemStyle: React.CSSProperties = {
 const logoutContainer: React.CSSProperties = {
   padding: "1rem",
   borderTop: "1px solid #e5e7eb",
+};
+
+const copyrightStyle: React.CSSProperties = {
+  marginBottom: "0.75rem",
+  textAlign: "center",
+};
+
+const copyrightTextStyle: React.CSSProperties = {
+  fontSize: "0.75rem",
+  color: "#9ca3af",
+  fontWeight: 400,
 };
 
 const logoutButton: React.CSSProperties = {
